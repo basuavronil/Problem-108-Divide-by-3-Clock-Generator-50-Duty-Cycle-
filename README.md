@@ -91,3 +91,12 @@ $$
 | **Extra hardware** | One D-FF (+ gate) | A full second copy of the circuit (+ gate) |
 | **Shift** | $+0.5$ cycles | $+0.5$ cycles |
 | **Final Duty Cycle** | **50%** ($N/2$ cycles) | **50%** ($N/2$ cycles) |
+
+
+## Output 
+### Waveform 
+<img width="959" height="181" alt="image" src="https://github.com/user-attachments/assets/d0b25858-bc8a-4e71-a75d-fdbd652e33eb" />
+
+
+### Simulation Terminal 
+<img width="821" height="406" alt="image" src="https://github.com/user-attachments/assets/99a75609-ee30-4f47-9176-84e157473cf5" />
