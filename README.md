@@ -6,8 +6,8 @@
 
 ## Table of Contents
 - [Overview](#overview)
-- [Method 1: OR Gate Approach](#method-1-dual-edge-signal-generation--or-gate)
-- [Method 2: AND Gate Shortcut](#method-2-the-phase-shortcut-posedge--negedge-anding)
+- [Method 1: Negedge D-FF + AND/OR Gate](#method-1-negedge-d-ff--andor-gate)
+- [Method 2: Posedge Circuit AND Negedge Circuit](#method-2-posedge-circuit-and-negedge-circuit)
 - [Summary Comparison](#summary-comparison)
 
 ---
@@ -16,56 +16,55 @@
 
 When dividing a clock by an **odd integer** ($N = 3, 5, 7, \dots$), a standard single-edge counter cannot inherently produce a 50% duty cycle, because $N$ cannot be evenly split into whole clock cycles.
 
-To achieve a 50% duty cycle output ($N/2$ cycles HIGH, $N/2$ cycles LOW), two primary techniques exist:
+To get a 50% duty cycle ($N/2$ cycles HIGH, $N/2$ cycles LOW), the output must be shifted by **half a clock cycle**, which needs the **negative edge** of the clock. There are two ways to do this:
 
-1. Dual-edge signal generation combined with an **OR** gate
-2. Over-extended pulse clipped with an **AND** gate (phase shortcut)
-
----
-
-## Method 1: Dual-Edge Signal Generation + OR Gate
-
-This method uses two identical logic paths running on opposite clock edges and combines them with a single logic gate.
-
-### How It Works
-
-1. **Posedge Generator:** Generate a signal `pos_out` on `posedge clk` that stays **HIGH for $\frac{N-1}{2}$ cycles** and **LOW for $\frac{N+1}{2}$ cycles**.
-2. **Negedge D Flip-Flop:** Pass `pos_out` through a D flip-flop sampled on `negedge clk` to create `neg_out` (shifted forward by half a clock cycle, i.e. $0.5\,T_{clk}$).
-3. **Combination:** Combine them with an **OR gate**:
-
-$$
-\text{clk\_out} = \text{pos\_out} \; \text{OR} \; \text{neg\_out}
-$$
-
-### Result
-
-The OR gate extends the HIGH duration at the tail end by $+0.5$ cycles:
-
-$$
-\text{HIGH Duration} = \frac{N-1}{2} + 0.5 = \frac{N}{2} \text{ cycles} \quad (50\% \text{ duty cycle})
-$$
+1. Sample the output of a flip-flop with a **negedge D flip-flop**, then combine both signals with an **AND / OR gate**.
+2. Build the **same circuit on posedge and on negedge**, then **AND** their outputs.
 
 ---
 
-## Method 2: The Phase Shortcut (Posedge & Negedge ANDing)
+## Method 1: Negedge D-FF + AND/OR Gate
 
-This shortcut directly clips an oversized pulse to obtain an exact $N/2$-cycle pulse width (1.5 cycles for $N=3$) using an AND gate.
+Take the output of any flip-flop (`pos_out`, generated on `posedge clk`), pass it through a **D flip-flop clocked on `negedge clk`** to get `neg_out` (shifted by $0.5\,T_{clk}$), and manipulate the two signals with an AND or OR gate to get the final output.
 
-### How the Shortcut Works
+### Steps
+1. **Posedge FF / counter:** generate `pos_out` on `posedge clk`.
+2. **Negedge D-FF:** sample `pos_out` on `negedge clk` to get `neg_out` (delayed by 0.5 cycles).
+3. **Combine `pos_out` and `neg_out`** with a gate. The gate depends on how wide `pos_out` was made:
 
-1. **Posedge Signal:** Generate a `pos_out` pulse on `posedge clk` that stays **HIGH for $\frac{N+1}{2}$ cycles** (e.g. 2 full cycles for $N=3$).
-2. **Negedge Signal:** Sample `pos_out` on `negedge clk` (or run a separate state machine on `negedge clk`) to generate `neg_out`. This shifts the waveform forward by **$0.5$ clock cycles**.
-3. **Combination:** Perform a bitwise **AND** operation:
+| Case | `pos_out` HIGH width | Gate | Effect | Final HIGH width |
+| :--- | :--- | :--- | :--- | :--- |
+| Under-extended | $\frac{N-1}{2}$ cycles | **OR** | adds $+0.5$ cycles | $\frac{N-1}{2} + 0.5 = \frac{N}{2}$ |
+| Over-extended | $\frac{N+1}{2}$ cycles | **AND** | trims $-0.5$ cycles | $\frac{N+1}{2} - 0.5 = \frac{N}{2}$ |
 
 $$
-\text{clk\_out} = \text{pos\_out} \; \text{AND} \; \text{neg\_out}
+\text{clk\_out} = \text{pos\_out} \;\text{OR}\; \text{neg\_out} \qquad \text{or} \qquad \text{clk\_out} = \text{pos\_out} \;\text{AND}\; \text{neg\_out}
 $$
 
-### Mathematical Proof (for $N=3$)
+### Example ($N = 3$, AND version)
+- `pos_out` is HIGH from $t = 0.0$ to $t = 2.0$.
+- `neg_out` is HIGH from $t = 0.5$ to $t = 2.5$.
+- Overlap = $2.0 - 0.5 = 1.5$ cycles HIGH out of 3.0, giving a **50% duty cycle**.
 
+---
+
+## Method 2: Posedge Circuit AND Negedge Circuit
+
+Instead of adding a single D-FF, build the **same divider circuit twice**: one triggered on `posedge clk` and one on `negedge clk`. Then **AND** the two outputs.
+
+### Steps
+1. **Posedge circuit:** generates `pos_out` on `posedge clk`, HIGH for $\frac{N+1}{2}$ cycles.
+2. **Negedge circuit:** the identical circuit on `negedge clk` generates `neg_out`, which is `pos_out` shifted by $0.5$ cycles.
+3. **AND the outputs:**
+
+$$
+\text{clk\_out} = \text{pos\_out} \;\text{AND}\; \text{neg\_out}
+$$
+
+### Mathematical Proof (for $N = 3$)
 - `pos_out` is HIGH from $t = 0.0$ to $t = 2.0$ (2.0 cycles).
 - `neg_out` is HIGH from $t = 0.5$ to $t = 2.5$ (2.0 cycles, shifted by $+0.5$).
-- Their overlap (`pos_out & neg_out`) is active from $t = 0.5$ to $t = 2.0$:
+- Their overlap is active from $t = 0.5$ to $t = 2.0$:
 
 $$
 \text{HIGH Time} = 2.0 - 0.5 = \mathbf{1.5 \text{ cycles}}
@@ -83,9 +82,10 @@ $$
 
 ## Summary Comparison
 
-| Parameter | OR Gate Method | AND Gate Method (Shortcut) |
+| Parameter | Method 1: Negedge D-FF + AND/OR | Method 2: Posedge AND Negedge circuit |
 | :--- | :--- | :--- |
-| **Posedge Pulse Width** | $\frac{N-1}{2}$ cycles (under-extended) | $\frac{N+1}{2}$ cycles (over-extended) |
-| **Shift Operation** | $+0.5$ cycles via `negedge clk` | $+0.5$ cycles via `negedge clk` |
-| **Combining Gate** | **OR** (adds $0.5$ cycles) | **AND** (trims $0.5$ cycles) |
+| **Source of shifted signal** | Negedge D-FF sampling an existing FF output | Duplicate of the same circuit on `negedge clk` |
+| **Combining gate** | **AND** or **OR** | **AND** |
+| **Extra hardware** | One D-FF (+ gate) | A full second copy of the circuit (+ gate) |
+| **Shift** | $+0.5$ cycles | $+0.5$ cycles |
 | **Final Duty Cycle** | **50%** ($N/2$ cycles) | **50%** ($N/2$ cycles) |
