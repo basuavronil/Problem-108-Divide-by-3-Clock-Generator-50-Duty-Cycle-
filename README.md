@@ -38,7 +38,7 @@ Take the output of any flip-flop (`pos_out`, generated on `posedge clk`), pass i
 | Over-extended | $\frac{N+1}{2}$ cycles | **AND** | trims $-0.5$ cycles | $\frac{N+1}{2} - 0.5 = \frac{N}{2}$ |
 
 $$
-\text{clk\_out} = \text{pos\_out} \;\text{OR}\; \text{neg\_out} \qquad \text{or} \qquad \text{clk\_out} = \text{pos\_out} \;\text{AND}\; \text{neg\_out}
+\text{clk}_{\text{out}} = \text{pos}_{\text{out}} \;\text{OR}\; \text{neg}_{\text{out}} \qquad \text{or} \qquad \text{clk}_{\text{out}} = \text{pos}_{\text{out}} \;\text{AND}\; \text{neg}_{\text{out}}
 $$
 
 ### Example ($N = 3$, AND version)
@@ -58,7 +58,7 @@ Instead of adding a single D-FF, build the **same divider circuit twice**: one t
 3. **AND the outputs:**
 
 $$
-\text{clk\_out} = \text{pos\_out} \;\text{AND}\; \text{neg\_out}
+\text{clk}_{\text{out}} = \text{pos}_{\text{out}} \;\text{AND}\; \text{neg}_{\text{out}}
 $$
 
 ### Mathematical Proof (for $N = 3$)
