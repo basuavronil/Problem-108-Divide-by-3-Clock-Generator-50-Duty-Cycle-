@@ -14,6 +14,8 @@
 
 ## Overview
 
+> **Note:** These techniques apply **only to odd frequency dividers** such as $f/3$, $f/5$, $f/7$, and so on. They are **not needed for even dividers** ($f/2$, $f/4$, $f/6$, ...): for even $N$, a 50% duty cycle is easy to achieve with a single-edge counter by simply toggling the output every $N/2$ clock cycles.
+
 When dividing a clock by an **odd integer** ($N = 3, 5, 7, \dots$), a standard single-edge counter cannot inherently produce a 50% duty cycle, because $N$ cannot be evenly split into whole clock cycles.
 
 To get a 50% duty cycle ($N/2$ cycles HIGH, $N/2$ cycles LOW), the output must be shifted by **half a clock cycle**, which needs the **negative edge** of the clock. There are two ways to do this:
